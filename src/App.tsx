@@ -1,7 +1,7 @@
  import React, { useState, useEffect } from 'react';
 import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import { Checkbox } from 'primereact/checkbox';
+import { Checkbox, CheckboxChangeEvent } from 'primereact/checkbox';
 import { Button } from 'primereact/button';
 import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
@@ -54,9 +54,9 @@ const App: React.FC = () => {
   };
 
   // Select all rows using the external Checkbox
-  const handleSelectAll = (e: { checked: boolean }) => {
-    setSelectAll(e.checked);
-    if (e.checked) {
+  const handleSelectAll = (event: CheckboxChangeEvent) => {
+    setSelectAll(event.checked ?? false); // Default to false if undefined
+    if (event.checked) {
       setSelectedArtworks(artworks); // Select all visible artworks
     } else {
       setSelectedArtworks([]); // Deselect all
