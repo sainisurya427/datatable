@@ -1,64 +1,170 @@
- // src/App.tsx
+//  // src/App.tsx
+// import React, { useState, useEffect } from 'react';
+// import { DataTable } from 'primereact/datatable';
+// import { Column } from 'primereact/column';
+// import CustomSelectionPanel from './components/CustomSelectionPanel';
+// import axios from 'axios';
+// import { Artwork } from './types/Artworks';
+
+// const App: React.FC = () => {
+//   const [artworks, setArtworks] = useState<Artwork[]>([]);
+//   const [selectedArtworks, setSelectedArtworks] = useState<Artwork[]>([]);
+//   const [totalRecords, setTotalRecords] = useState<number>(0);
+//   const [page, setPage] = useState<number>(0);
+//   const [rowsPerPage, setRowsPerPage] = useState<number>(5);
+
+//   useEffect(() => {
+//     const fetchArtworks = async () => {
+//       try {
+//         const response = await axios.get(`https://api.artic.edu/api/v1/artworks?page=${page + 1}`);
+//         const data = response.data.data;
+//         const total = response.data.pagination.total;
+//         setArtworks(data);
+//         setTotalRecords(total);
+//       } catch (error) {
+//         console.error('Error fetching data:', error);
+//       }
+//     };
+
+//     fetchArtworks();
+//   }, [page, rowsPerPage]);
+
+//   const onRowSelect = (e: { value: Artwork[] }) => {
+//     setSelectedArtworks(e.value);
+//   };
+
+//   return (
+//     <div className="card">
+//       <DataTable
+//         value={artworks}
+//         selection={selectedArtworks}
+//         onSelectionChange={(e) => onRowSelect(e as { value: Artwork[] })}
+//         paginator
+//         rows={rowsPerPage}
+//         totalRecords={totalRecords}
+//         onPage={(e) => setPage(e.page)}
+//         rowsPerPageOptions={[5, 10, 20]}
+//         selectionMode="checkbox"
+//       >
+//         <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
+//         <Column field="title" header="Title"></Column>
+//         <Column field="place_of_origin" header="Place of Origin"></Column>
+//         <Column field="artist_display" header="Artist"></Column>
+//         <Column field="inscriptions" header="Inscriptions"></Column>
+//         <Column field="date_start" header="Start Date"></Column>
+//         <Column field="date_end" header="End Date"></Column>
+//       </DataTable>
+
+//       {/* Custom Selection Panel */}
+//       <CustomSelectionPanel selectedArtworks={selectedArtworks} />
+//     </div>
+//   );
+// };
+
+// export default App;
+
+
+
+
 import React, { useState, useEffect } from 'react';
-import { DataTable } from 'primereact/datatable';
+import { DataTable, DataTablePageEvent } from 'primereact/datatable';
 import { Column } from 'primereact/column';
-import CustomSelectionPanel from './components/CustomSelectionPanel';
-import axios from 'axios';
-import { Artwork } from './types/Artworks';
+import { Checkbox } from 'primereact/checkbox';
+import { Button } from 'primereact/button';
+import 'primereact/resources/themes/saga-blue/theme.css';
+import 'primereact/resources/primereact.min.css';
+import 'primeicons/primeicons.css';
+import './App.css';
+
+interface Artwork {
+  id: number;
+  title: string;
+  place_of_origin: string;
+  artist_display: string;
+  inscriptions: string;
+  date_start: number;
+  date_end: number;
+}
 
 const App: React.FC = () => {
   const [artworks, setArtworks] = useState<Artwork[]>([]);
-  const [selectedArtworks, setSelectedArtworks] = useState<Artwork[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [totalRecords, setTotalRecords] = useState<number>(0);
-  const [page, setPage] = useState<number>(0);
-  const [rowsPerPage, setRowsPerPage] = useState<number>(5);
+  const [selectedArtworks, setSelectedArtworks] = useState<Artwork[]>([]);
+  const [rowsPerPage] = useState<number>(10); // Removed setRowsPerPage as it's not being used
+  const [page, setPage] = useState<number>(0); // To track current page
 
+  // Fetch artworks data from API
+  const fetchArtworks = async (page: number) => {
+    setLoading(true);
+    const response = await fetch(`https://api.artic.edu/api/v1/artworks?page=${page + 1}`);
+    const data = await response.json();
+    setArtworks(data.data);
+    setTotalRecords(data.pagination.total);
+    setLoading(false);
+  };
+
+  // Handle page change
+  const handlePageChange = (event: DataTablePageEvent) => {
+    const newPage = event.page !== undefined ? event.page : 0; // Ensure page is always a number
+    setPage(newPage);
+  };
+
+  // Fetch artworks when page changes
   useEffect(() => {
-    const fetchArtworks = async () => {
-      try {
-        const response = await axios.get(`https://api.artic.edu/api/v1/artworks?page=${page + 1}`);
-        const data = response.data.data;
-        const total = response.data.pagination.total;
-        setArtworks(data);
-        setTotalRecords(total);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
+    fetchArtworks(page);
+  }, [page]);
 
-    fetchArtworks();
-  }, [page, rowsPerPage]);
-
-  const onRowSelect = (e: { value: Artwork[] }) => {
+  // Render row selection checkbox
+  const onSelectionChange = (e: { value: Artwork[] }) => {
     setSelectedArtworks(e.value);
   };
 
+  // Column template functions
+  const titleBodyTemplate = (rowData: Artwork) => rowData.title;
+  const placeOfOriginBodyTemplate = (rowData: Artwork) => rowData.place_of_origin;
+  const artistDisplayBodyTemplate = (rowData: Artwork) => rowData.artist_display;
+  const inscriptionsBodyTemplate = (rowData: Artwork) => rowData.inscriptions;
+  const dateStartBodyTemplate = (rowData: Artwork) => rowData.date_start;
+  const dateEndBodyTemplate = (rowData: Artwork) => rowData.date_end;
+
   return (
-    <div className="card">
+    <div className="App">
+      <h1>Artworks Table</h1>
       <DataTable
         value={artworks}
-        selection={selectedArtworks}
-        onSelectionChange={(e) => onRowSelect(e as { value: Artwork[] })}
         paginator
         rows={rowsPerPage}
         totalRecords={totalRecords}
-        onPage={(e) => setPage(e.page)}
-        rowsPerPageOptions={[5, 10, 20]}
+        lazy
+        first={page * rowsPerPage}
+        onPage={handlePageChange}
+        loading={loading}
+        selection={selectedArtworks}
+        onSelectionChange={onSelectionChange}
         selectionMode="checkbox"
+        dataKey="id"
       >
         <Column selectionMode="multiple" headerStyle={{ width: '3em' }}></Column>
-        <Column field="title" header="Title"></Column>
-        <Column field="place_of_origin" header="Place of Origin"></Column>
-        <Column field="artist_display" header="Artist"></Column>
-        <Column field="inscriptions" header="Inscriptions"></Column>
-        <Column field="date_start" header="Start Date"></Column>
-        <Column field="date_end" header="End Date"></Column>
+        <Column field="title" header="Title" body={titleBodyTemplate}></Column>
+        <Column field="place_of_origin" header="Place of Origin" body={placeOfOriginBodyTemplate}></Column>
+        <Column field="artist_display" header="Artist" body={artistDisplayBodyTemplate}></Column>
+        <Column field="inscriptions" header="Inscriptions" body={inscriptionsBodyTemplate}></Column>
+        <Column field="date_start" header="Start Date" body={dateStartBodyTemplate}></Column>
+        <Column field="date_end" header="End Date" body={dateEndBodyTemplate}></Column>
       </DataTable>
 
-      {/* Custom Selection Panel */}
-      <CustomSelectionPanel selectedArtworks={selectedArtworks} />
+      <div className="selection-panel">
+        <h3>Selected Artworks</h3>
+        {selectedArtworks.map((artwork) => (
+          <div key={artwork.id}>
+            <p>{artwork.title}</p>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
 
 export default App;
+
